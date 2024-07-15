@@ -10,22 +10,28 @@ import com.riteny.javalin.entity.User;
 import io.javalin.http.Context;
 import io.javalin.http.servlet.JavalinServletContext;
 
-@RestController(path = "/test")
+@RestController(path = "/test2")
 public class SampleController {
 
     @GetMapping(path = "/")
-    public void testGet(Context ctx) {
+    public User testGet(JavalinServletContext ctx) {
         ctx.result("Hello World");
+
+        User user = new User();
+        user.setName("admin");
+        user.setPassword("123456");
+
+        return user;
     }
 
     @PostMapping(path = "/{cid}")
-    public void testPost(@RequestParam(name = "name") String name, @PathParam(name = "cid") String cid, @RequestBody User body, JavalinServletContext ctx) {
+    public String testPost(@RequestParam(name = "name") String name, @PathParam(name = "cid") String cid, @RequestBody User body, JavalinServletContext ctx) {
 
         System.out.println("Cid : " + cid);
         System.out.println("Name : " + name);
         System.out.println("Message : " + body);
 
-        ctx.result(ctx.body());
+        return ctx.body();
     }
 
     @PostMapping(path = "/exception")

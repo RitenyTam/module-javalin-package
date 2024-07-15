@@ -124,25 +124,32 @@ public class ApplicationInit {
                 for (Method method : methods) {
                     if (method.isAnnotationPresent(GetMapping.class)) {
                         GetMapping getMapping = method.getAnnotation(GetMapping.class);
-                        app.get(restController.path() + getMapping.path(), context -> method.invoke(o, injectHttpContextParams(method, context)));
+                        app.get(restController.path() + getMapping.path(), context -> invokeControllerMethod(o, method, context));
                     }
                     if (method.isAnnotationPresent(PostMapping.class)) {
                         PostMapping postMapping = method.getAnnotation(PostMapping.class);
-                        app.post(restController.path() + postMapping.path(), context -> method.invoke(o, injectHttpContextParams(method, context)));
+                        app.post(restController.path() + postMapping.path(), context -> invokeControllerMethod(o, method, context));
                     }
                     if (method.isAnnotationPresent(PutMapping.class)) {
                         PutMapping putMapping = method.getAnnotation(PutMapping.class);
-                        app.put(restController.path() + putMapping.path(), context -> method.invoke(o, injectHttpContextParams(method, context)));
+                        app.put(restController.path() + putMapping.path(), context -> invokeControllerMethod(o, method, context));
                     }
                     if (method.isAnnotationPresent(DeleteMapping.class)) {
                         DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
-                        app.delete(restController.path() + deleteMapping.path(), context -> method.invoke(o, injectHttpContextParams(method, context)));
+                        app.delete(restController.path() + deleteMapping.path(), context -> invokeControllerMethod(o, method, context));
                     }
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static void invokeControllerMethod(Object o, Method method, Context context) throws InvocationTargetException, IllegalAccessException {
+        var result = method.invoke(o, injectHttpContextParams(method, context));
+        if (result != null) {
+            context.json(result);
+        }
     }
 
     private static <T extends Context> Object[] injectHttpContextParams(Method method, T ctx) {
@@ -216,7 +223,10 @@ public class ApplicationInit {
 
                         ExceptionHandler<Exception> exceptionHandler = (e, context) -> {
                             try {
-                                method.invoke(o, e, context);
+                                var result = method.invoke(o, e, context);
+                                if (result != null) {
+                                    context.json(result);
+                                }
                             } catch (IllegalAccessException | InvocationTargetException ex) {
                                 throw new RuntimeException(ex);
                             }
